@@ -7,7 +7,7 @@ public class Table {
     public String name2 = null;
     public int numberOfPlayers = 0;
     public int tableNumber;
-    public String TestowyTekst = "Testowy";
+    public String TestowyTekst = "Testowy123";
 
     public Table(int tableNumber) {
         this.tableNumber = tableNumber;
