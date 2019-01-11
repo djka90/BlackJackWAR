@@ -9,95 +9,257 @@ import javax.websocket.Session;
 
 @ApplicationScoped
 public class DeviceSessionHandler {
-    private int deviceId = 0;
+    //private int deviceId = 0;
     private final Set<Session> sessions = new HashSet<>();
-    private final Set<Device> devices = new HashSet<>();
-    LinkedList<String> logins = new LinkedList<>();
+    //private final Set<Device> devices = new HashSet<>();
+    LinkedList<Player> players = new LinkedList<>();
     LinkedList<Table> tables = new LinkedList<>();
+    LinkedList<ActivePlayer> activePlayers = new LinkedList<>();
+    int counter = 0;
+
+    public void myInit() {
+        players.add(new Player("a"));
+        players.add(new Player("abc"));
+
+        tables.add(new Table(1));
+        tables.add(new Table(2));
+        tables.add(new Table(3));
+        tables.add(new Table(4));
+        tables.add(new Table(5));
+
+        //tables.getLast().numberOfPlayers = 2;
+    }
+
+    public void checkRegister(Session session, String name) {
+
+        boolean checker = true;
+        for (Player player: players) {
+            if (player.login.equals(name)) checker = false;
+        }
+        if (checker == true) {
+            players.add(new Player(name));
+            activePlayers.add(new ActivePlayer(session,name));
+            JsonObject mess = createMessage("correctName", name, "xxx");
+            sendToSession(session,mess);
+        }
+        else {
+            JsonObject mess = createMessage("wrongName", name, "xxx");
+            sendToSession(session,mess);
+        }
+    }
+
+    public void checkPasswordReg(String name, String instruction) {
+
+        for (Player player : players) {
+            if (player.login.equals(name)) player.password = instruction;
+        }
+    }
+
+    public void checkLogin(Session session, String name) {
+
+        boolean checker = false;
+        for (Player player: players) {
+            if (player.login.equals(name)) checker = true;
+        }
+        if (checker == true) {
+            for (ActivePlayer activePlayer: activePlayers) {
+                if (activePlayer.login.equals(name)) checker = false;
+            }
+        }
+        if (checker == true) {
+            activePlayers.add(new ActivePlayer(session,name));
+            JsonObject mess = createMessage("correctName2", name, "xxx");
+            sendToSession(session,mess);
+        }
+        else {
+            JsonObject mess = createMessage("wrongName2", name, "xxx");
+            sendToSession(session,mess);
+        }
+    }
+
+    public void checkPasswordLog(Session session, String name, String instruction) {
+
+        boolean checker = false;
+        for (Player player: players) {
+            if (player.login.equals(name) && player.password.equals(instruction)) checker = true;
+        }
+        if (checker == true) {
+            JsonObject mess = createMessage("correctPassword2", "xxx", "xxx");
+            sendToSession(session,mess);
+        }
+        else {
+            JsonObject mess = createMessage("wrongPassword2", "xxx", "xxx");
+            sendToSession(session,mess);
+        }
+    }
+
+    public void checkTable(Session session, String name, int tableNumber) {
+
+        int indexTable = tableNumber - 1;
+        Table table = tables.get(indexTable);
+        if (table.numberOfPlayers < 2) {
+            if (table.numberOfPlayers == 0) {
+                table.name1 = name;
+                table.session1 = session;
+                table.numberOfPlayers = 1;
+            }
+            else {
+                table.name2 = name;
+                table.session2 = session;
+                table.numberOfPlayers = 2;
+            }
+            JsonObject mess = createMessage("correctTable","xxx", "xxx");
+            sendToSession(session,mess);
+        }
+        else {
+            JsonObject mess = createMessage("wrongTable","xxx", "xxx");
+            sendToSession(session,mess);
+        }
+    }
+
+    public void checkMessage(String name, String nameAndMessage) {
+
+        JsonObject mess = createMessage("newMessage", "xxx", nameAndMessage);
+        for (Table table : tables) {
+            if (name.equals(table.name1)||name.equals(table.name2)) {
+                sendToSession(table.session1,mess);
+                sendToSession(table.session2,mess);
+            }
+        }
+    }
+
+    public void callForCard(Session session, String name) {
+        String card = null;
+        for (Table table : tables) {
+            if (name.equals(table.name1)||name.equals(table.name2)) {
+                card = table.randomCard(name);
+            }
+        }
+        JsonObject mess = createMessage("newCard", "xxx", card);
+        sendToSession(session,mess);
+    }
+
+    public Table findTable (String name) {
+        Table thisTable = null;
+        for (Table table : tables) {
+            if (name.equals(table.name1)||name.equals(table.name2)) {
+                thisTable = table;
+            }
+        }
+        return thisTable;
+    }
+
+    public Table findTableBySession (Session session) {
+        Table thisTable = null;
+        for (Table table : tables) {
+            if (session.equals(table.session1)||session.equals(table.session2)) {
+                thisTable = table;
+            }
+        }
+        return thisTable;
+    }
+
+    public void callForResult(String name) {
+        int result = -1;
+        Table thisTable = this.findTable(name);
+        if (name.equals(thisTable.name1)) thisTable.pass1 = 1;
+        else thisTable.pass2 = 1;
+        result = thisTable.resultOfGame();
+        if (result == -1) ;
+        else if (result == 0) {
+            JsonObject mess = createMessage("gameResult", "xxx", "DRAW!!! "+thisTable.result1+" vs. "+thisTable.result2);
+            sendToSession(thisTable.session1,mess);
+            sendToSession(thisTable.session2,mess);
+        } else if (result == 1) {
+            JsonObject mess1 = createMessage("gameResult", "xxx", "You WIN!!! "+thisTable.result1+" vs. "+thisTable.result2);
+            sendToSession(thisTable.session1,mess1);
+            JsonObject mess2 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result2+" vs. "+thisTable.result1);
+            sendToSession(thisTable.session2,mess2);
+            for (Player player : players) {
+                if (player.login.equals(thisTable.name1)) player.rank = player.rank + 1;
+                else if (player.login.equals(thisTable.name2)) player.rank = player.rank - 1;
+            }
+        } else if (result == 2) {
+            JsonObject mess3 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result1+" vs. "+thisTable.result2);
+            sendToSession(thisTable.session1,mess3);
+            JsonObject mess4 = createMessage("gameResult", "xxx", "You WIN!!! "+thisTable.result2+" vs. "+thisTable.result1);
+            sendToSession(thisTable.session2,mess4);
+            for (Player player : players) {
+                if (player.login.equals(thisTable.name1)) player.rank = player.rank - 1;
+                else if (player.login.equals(thisTable.name2)) player.rank = player.rank + 1;
+            }
+        }
+    }
+
+    public void callForNewGame(String name) {
+        Table thisTable = this.findTable(name);
+        if (name.equals(thisTable.name1)) thisTable.newGame1 = 1;
+        else if (name.equals(thisTable.name2)) thisTable.newGame2 = 1;
+        if (thisTable.newGame1 == 0 || thisTable.newGame2 == 0) ;
+        else {
+            thisTable.resetGame();
+            JsonObject mess = createMessage("newGameStart", "xxx", "xxx");
+            sendToSession(thisTable.session1,mess);
+            sendToSession(thisTable.session2,mess);
+        }
+    }
+
+    public void sortRanking() {
+    }
+
+    public String generateRanking() {
+        String ranking = "";
+        int lp = 1;
+        for (Player player: players) {
+            ranking = ranking + lp + ". " + player.login + " " + player.rank + "<br>";
+            lp++;
+        }
+        return ranking;
+    }
+
+    public void callForNewRanking(Session session) {
+        this.sortRanking();
+        String ranking = this.generateRanking();
+        JsonObject mess = createMessage("rankingRefreshed", "xxx", ranking);
+        sendToSession(session,mess);
+    }
 
     public void addSession(Session session) {
         sessions.add(session);
-        for (Device device : devices) {
-            JsonObject addMessage = createAddMessage(device);
-            sendToSession(session, addMessage);
-        }
+    }
 
+    public void checkClosedPlayerTable(Session session) {
+
+        Table thisTable = this.findTableBySession(session);
+        if (thisTable == null) ;
+        else {
+            JsonObject mess = createMessage("opponentLost", "xxx", "xxx");
+            if (session.equals(thisTable.session1)) sendToSession(thisTable.session2,mess);
+            else if (session.equals(thisTable.session2)) sendToSession(thisTable.session1,mess);
+            thisTable.resetTable();
+        }
+    }
+
+    public void removeActivePlayer(Session session) {
+        Iterator<ActivePlayer> it = activePlayers.iterator();
+        while (it.hasNext()) {
+            ActivePlayer activePlayer = it.next();
+            if (activePlayer.session.equals(session)) {
+                it.remove();
+            }
+        }
     }
 
     public void removeSession(Session session) {
         sessions.remove(session);
     }
 
-    public List<Device> getDevices() {
-        return new ArrayList<>(devices);
-    }
-
-    public void addDevice(Device device) {
-        device.setId(deviceId);
-        devices.add(device);
-        deviceId++;
-        JsonObject addMessage = createAddMessage(device);
-        sendToAllConnectedSessions(addMessage);
-    }
-
-    public void removeDevice(int id) {
-        Device device = getDeviceById(id);
-        if (device != null) {
-            devices.remove(device);
-            JsonProvider provider = JsonProvider.provider();
-            JsonObject removeMessage = provider.createObjectBuilder()
-                    .add("action", "remove")
-                    .add("id", id)
-                    .build();
-            sendToAllConnectedSessions(removeMessage);
-        }
-    }
-
-    public void toggleDevice(int id) {
-        JsonProvider provider = JsonProvider.provider();
-        Device device = getDeviceById(id);
-        if (device != null) {
-            if ("On".equals(device.getStatus())) {
-                device.setStatus("Off");
-            } else {
-                device.setStatus("On");
-            }
-            JsonObject updateDevMessage = provider.createObjectBuilder()
-                    .add("action", "toggle")
-                    .add("id", device.getId())
-                    .add("status", device.getStatus())
-                    .build();
-            sendToAllConnectedSessions(updateDevMessage);
-        }
-    }
-
-    public Device getDeviceById(int id) {
-        for (Device device : devices) {
-            if (device.getId() == id) {
-                return device;
-            }
-        }
-        return null;
-    }
-
-    public JsonObject createMessage(String action, String name) {
+    public JsonObject createMessage(String action, String name, String instruction) {
         JsonProvider provider = JsonProvider.provider();
         JsonObject addMessage = provider.createObjectBuilder()
                 .add("action", action)
                 .add("name", name)
-                .build();
-        return addMessage;
-    }
-
-    public JsonObject createAddMessage(Device device) {
-        JsonProvider provider = JsonProvider.provider();
-        JsonObject addMessage = provider.createObjectBuilder()
-                .add("action", "add")
-                .add("id", device.getId())
-                .add("name", device.getName())
-                .add("type", device.getType())
-                .add("status", device.getStatus())
-                .add("description", device.getDescription())
+                .add("instruction", instruction)
                 .build();
         return addMessage;
     }
