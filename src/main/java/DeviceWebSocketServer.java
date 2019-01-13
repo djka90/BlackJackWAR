@@ -8,6 +8,8 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import javax.enterprise.context.ApplicationScoped;
 import java.io.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.logging.*;
 import java.lang.*;
 
@@ -28,6 +30,7 @@ public class DeviceWebSocketServer {
 
         sessionHandler.addSession(session);
         System.out.println("Opened session ID: " + session.getId());
+        //insertTest();
     }
 
     @OnClose
@@ -121,4 +124,5 @@ public class DeviceWebSocketServer {
 
         }
     }
+
 }    

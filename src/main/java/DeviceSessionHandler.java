@@ -1,5 +1,11 @@
 import javax.enterprise.context.ApplicationScoped;
 import java.io.*;
+import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.*;
 import java.util.logging.*;
@@ -17,7 +23,10 @@ public class DeviceSessionHandler {
     LinkedList<ActivePlayer> activePlayers = new LinkedList<>();
     int counter = 0;
 
+
+
     public void myInit() {
+        Connection connection = null;
         players.add(new Player("a"));
         players.add(new Player("abc"));
 
@@ -27,7 +36,45 @@ public class DeviceSessionHandler {
         tables.add(new Table(4));
         tables.add(new Table(5));
 
+        try
+        {
+            connection = ConnectionConfiguration.getConnection();
+            if (connection != null) {
+                System.out.println("Connection with DB established");
+                insertTest(connection);
+                System.out.println("Insert done!");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            if (connection != null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    System.out.println("Connection DB Error!");
+                }
+            }
+        }
+
+
+
         //tables.getLast().numberOfPlayers = 2;
+    }
+
+    public boolean insertTest(Connection connection){
+        try {
+            PreparedStatement prepStmt = connection.prepareStatement("insert into TEST_TABLE (id, NAME, AGE) values (6, ?,?)");
+            System.out.println("Done");
+            prepStmt.setString(1,"Bartek");
+            prepStmt.setInt(2,33);
+            prepStmt.execute();
+        }catch (SQLException e){
+            System.err.println("Insert error");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public void checkRegister(Session session, String name) {
