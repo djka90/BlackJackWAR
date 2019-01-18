@@ -61,6 +61,22 @@ div {
     height: 360px; /* Should be removed. Only for demonstration */
 }
 
+/* Create 13 equal columns that floats next to each other */
+.column13 {
+    float: left;
+    width: 7.69%;
+    padding: 10px;
+    height: 90px; /* Should be removed. Only for demonstration */
+}
+
+/* Create 26 equal columns that floats next to each other */
+.column26 {
+    float: left;
+    width: 3.84%;
+    padding: 1px;
+    height: 60px; /* Should be removed. Only for demonstration */
+}
+
 /* Clear floats after the columns */
 .row:after {
     content: "";

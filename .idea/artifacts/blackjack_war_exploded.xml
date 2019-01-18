@@ -6,8 +6,10 @@
       <element id="directory" name="WEB-INF">
         <element id="directory" name="classes">
           <element id="module-output" name="BlackJackWAR" />
+          <element id="module-output" name="BlackJack_WAR" />
         </element>
       </element>
+      <element id="javaee-facet-resources" facet="BlackJack_WAR/web/Web" />
     </root>
   </artifact>
 </component>

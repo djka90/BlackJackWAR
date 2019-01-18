@@ -8,8 +8,6 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import javax.enterprise.context.ApplicationScoped;
 import java.io.*;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.logging.*;
 import java.lang.*;
 
@@ -29,19 +27,13 @@ public class DeviceWebSocketServer {
         sessionHandler.counter++;
 
         sessionHandler.addSession(session);
-        System.out.println("Opened session ID: " + session.getId());
-        //insertTest();
     }
 
     @OnClose
     public void close(Session session) {
-        System.out.println("Closed session ID: " + session.getId());
 
         sessionHandler.checkClosedPlayerTable(session);
         sessionHandler.removeActivePlayer(session);
-        for (ActivePlayer activePlayer: sessionHandler.activePlayers) {
-            System.out.println(" " + activePlayer.login + " ");
-        }
         sessionHandler.removeSession(session);
     }
 
@@ -124,5 +116,4 @@ public class DeviceWebSocketServer {
 
         }
     }
-
 }    

@@ -243,6 +243,7 @@ function newGame() {
 }
 
 function newGameStart() {
+    hideAllCards();
     var x = document.getElementById("result");
     clearElement(x);
     x.innerHTML = "Playing...<br><br>Your cards: ";
@@ -261,6 +262,10 @@ function addCard() {
 function newCard(messFrom) {
     var x = document.getElementById("result");
     x.insertAdjacentHTML( 'beforeEnd', messFrom.instruction+' ' );
+
+    var cardId = messFrom.name;
+    var card = document.getElementById(cardId)
+    unhideCard(card);
 }
 
 function pass() {
@@ -285,6 +290,7 @@ function gameResult(messFrom) {
 }
 
 function opponentLost() {
+    hideAllCards();
     var x = document.getElementById("chooseTable");
     clearElement(x);
     x.innerHTML = "Opponent lost... Choose a table again for playing";
@@ -319,7 +325,62 @@ function unhideElement(element) {
     x.style.display = "";
 }
 
+function hideCard(element) {
+    var x = document.getElementById(element.id);
+    x.style.opacity = 0.3;
+}
+
+function unhideCard(element) {
+    var x = document.getElementById(element.id);
+    x.style.opacity = 1;
+}
+
+function hideAllCards() {
+    var i;
+    for (i = 0; i < 52; i++) {
+        var cardId = "" + i;
+        var card = document.getElementById(cardId)
+        hideCard(card);
+    }
+}
+
+
+
+function weather() {
+    var location = document.getElementById("location");
+    var apiKey = "INSERT API KEY";
+    var url = "https://api.forecast.io/forecast/";
+
+    navigator.geolocation.getCurrentPosition(success, error);
+
+    function success(position) {
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+
+        location.innerHTML =
+            "Latitude is " + latitude + "° Longitude is " + longitude + "°";
+
+        $.getJSON(
+            url + apiKey + "/" + latitude + "," + longitude + "?callback=?",
+            function(data) {
+                $("#temp").html(data.currently.temperature + "° F");
+                $("#minutely").html(data.minutely.summary);
+            }
+        );
+    }
+
+    function error() {
+        location.innerHTML = "Unable to retrieve your location";
+    }
+
+    location.innerHTML = "Locating...";
+}
+
+
+
 function init() {
+    weather();
+    hideAllCards();
     hideElement(document.getElementById("passwordButton"));
     hideElement(document.getElementById("regPage"));
     hideElement(document.getElementById("passwordButton2"));

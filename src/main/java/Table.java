@@ -68,17 +68,16 @@ public class Table {
         this.resetDecks();
     }
 
-    public String randomCard(String name) {
+    public Card randomCard(String name) {
         int cardIndex = 0;
         String cardName = null;
-        Card card;
+        Card card = null;
         if (name.equals(name1)) {
             cardIndex = random1.nextInt(52);
             if (cardIndex > deck1.size()) cardIndex = deck1.size() - 1;
             card = deck1.get(cardIndex);
             if (card.figure.equals("A")) aces1++;
             result1 = result1 + card.value;
-            cardName = "{" + card.figure + card.color + "}";
             deck1.remove(cardIndex);
         } else {
             cardIndex = random2.nextInt(52);
@@ -86,10 +85,9 @@ public class Table {
             card = deck2.get(cardIndex);
             if (card.figure.equals("A")) aces2++;
             result2 = result2 + card.value;
-            cardName = "{" + card.figure + card.color + "}";
             deck2.remove(cardIndex);
         }
-        return cardName;
+        return card;
     }
 
     public int resultOfGame() {

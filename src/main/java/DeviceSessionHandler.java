@@ -1,17 +1,17 @@
 import javax.enterprise.context.ApplicationScoped;
 import java.io.*;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.*;
 import java.util.logging.*;
 import javax.json.*;
 import javax.json.spi.*;
 import javax.websocket.Session;
+import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @ApplicationScoped
 public class DeviceSessionHandler {
@@ -22,8 +22,6 @@ public class DeviceSessionHandler {
     LinkedList<Table> tables = new LinkedList<>();
     LinkedList<ActivePlayer> activePlayers = new LinkedList<>();
     int counter = 0;
-
-
 
     public void myInit() {
         Connection connection = null;
@@ -41,8 +39,8 @@ public class DeviceSessionHandler {
             connection = ConnectionConfiguration.getConnection();
             if (connection != null) {
                 System.out.println("Connection with DB established");
-                insertTest(connection);
-                System.out.println("Insert done!");
+                //insertTest(connection);
+                selectTest(connection);
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -57,24 +55,7 @@ public class DeviceSessionHandler {
             }
         }
 
-
-
         //tables.getLast().numberOfPlayers = 2;
-    }
-
-    public boolean insertTest(Connection connection){
-        try {
-            PreparedStatement prepStmt = connection.prepareStatement("insert into TEST_TABLE (id, NAME, AGE) values (6, ?,?)");
-            System.out.println("Done");
-            prepStmt.setString(1,"Bartek");
-            prepStmt.setInt(2,33);
-            prepStmt.execute();
-        }catch (SQLException e){
-            System.err.println("Insert error");
-            e.printStackTrace();
-            return false;
-        }
-        return true;
     }
 
     public void checkRegister(Session session, String name) {
@@ -93,6 +74,30 @@ public class DeviceSessionHandler {
             JsonObject mess = createMessage("wrongName", name, "xxx");
             sendToSession(session,mess);
         }
+    }
+
+    public boolean selectTest(Connection connection){
+        try{
+            Statement statement = connection.createStatement();
+
+            String query = "SELECT * FROM SYSTEM.TEST_TABLE";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()){
+                Integer id = resultSet.getInt("ID");
+                String name = resultSet.getString("TEST");
+
+                System.out.format("%s, %s\n", id, name);
+                //statement.close();
+            }
+
+            System.out.println("Data selected");
+        }catch(SQLException e){
+            System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
     }
 
     public void checkPasswordReg(String name, String instruction) {
@@ -176,13 +181,17 @@ public class DeviceSessionHandler {
     }
 
     public void callForCard(Session session, String name) {
-        String card = null;
+        Card card = null;
+        String cardName = null;
+        String cardId = null;
         for (Table table : tables) {
             if (name.equals(table.name1)||name.equals(table.name2)) {
                 card = table.randomCard(name);
+                cardName = "{" + card.figure + card.color + "}";
+                cardId = ""+card.id;
             }
         }
-        JsonObject mess = createMessage("newCard", "xxx", card);
+        JsonObject mess = createMessage("newCard", cardId, cardName);
         sendToSession(session,mess);
     }
 
