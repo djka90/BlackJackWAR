@@ -6,4 +6,10 @@ public class Player {
     public Player(String login) {
         this.login = login;
     }
+
+    public Player(String login, String password, int rank) {
+        this.login = login;
+        this.password = password;
+        this.rank = rank;
+    }
 }

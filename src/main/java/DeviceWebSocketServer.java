@@ -27,6 +27,8 @@ public class DeviceWebSocketServer {
         sessionHandler.counter++;
 
         sessionHandler.addSession(session);
+        System.out.println("Opened session: " + session.getId());
+        sessionHandler.insertSession(session);
     }
 
     @OnClose
@@ -34,6 +36,8 @@ public class DeviceWebSocketServer {
 
         sessionHandler.checkClosedPlayerTable(session);
         sessionHandler.removeActivePlayer(session);
+        System.out.println("Closed session: " + session.getId());
+        sessionHandler.insertSession(session);
         sessionHandler.removeSession(session);
     }
 

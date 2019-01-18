@@ -22,11 +22,13 @@ public class DeviceSessionHandler {
     LinkedList<Table> tables = new LinkedList<>();
     LinkedList<ActivePlayer> activePlayers = new LinkedList<>();
     int counter = 0;
+    int userId = 0;
+    Connection connection = ConnectionConfiguration.getConnection();;
 
     public void myInit() {
-        Connection connection = null;
-        players.add(new Player("a"));
-        players.add(new Player("abc"));
+        //Connection connection = null;
+        //players.add(new Player("a"));
+        //players.add(new Player("abc"));
 
         tables.add(new Table(1));
         tables.add(new Table(2));
@@ -36,15 +38,17 @@ public class DeviceSessionHandler {
 
         try
         {
-            connection = ConnectionConfiguration.getConnection();
+            //connection = ConnectionConfiguration.getConnection();
             if (connection != null) {
                 System.out.println("Connection with DB established");
                 //insertTest(connection);
-                selectTest(connection);
+                selectPlayers(connection);
+                //Statement statement = connection.createStatement();
+                //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (8, 'ddd', 'eee', 30)");
             }
         }catch(Exception e){
             e.printStackTrace();
-        }finally{
+        }/*finally{
             if (connection != null){
                 try {
                     connection.close();
@@ -53,28 +57,14 @@ public class DeviceSessionHandler {
                     System.out.println("Connection DB Error!");
                 }
             }
-        }
+        }*/
 
         //tables.getLast().numberOfPlayers = 2;
     }
 
-    public void checkRegister(Session session, String name) {
 
-        boolean checker = true;
-        for (Player player: players) {
-            if (player.login.equals(name)) checker = false;
-        }
-        if (checker == true) {
-            players.add(new Player(name));
-            activePlayers.add(new ActivePlayer(session,name));
-            JsonObject mess = createMessage("correctName", name, "xxx");
-            sendToSession(session,mess);
-        }
-        else {
-            JsonObject mess = createMessage("wrongName", name, "xxx");
-            sendToSession(session,mess);
-        }
-    }
+
+
 
     public boolean selectTest(Connection connection){
         try{
@@ -100,10 +90,125 @@ public class DeviceSessionHandler {
         return  true;
     }
 
+    public boolean selectPlayers(Connection connection){
+        try{
+            Statement statement = connection.createStatement();
+
+            String query = "SELECT * FROM SYSTEM.BJ_USERS";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()){
+                players.add(new Player(resultSet.getString("LOGIN"),resultSet.getString("PASSWORD"),resultSet.getInt("RANKING")));
+                userId++;
+            }
+
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
+    }
+
+    public boolean insertPlayer(Connection connection, Player player){
+        try{
+            Statement statement = connection.createStatement();
+            userId++;
+            statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES ("+userId+", '"+player.login+"', '"+player.password+"', "+player.rank+")");
+            //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (7, "+player.login+", "+player.password+", "+player.rank+")");
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
+    }
+
+    public boolean updatePlayerPass(Connection connection, Player player){
+        try{
+            Statement statement = connection.createStatement();
+            statement.execute("UPDATE SYSTEM.BJ_USERS SET PASSWORD = '"+player.password+"' where LOGIN = '"+player.login+"'");
+            //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (7, "+player.login+", "+player.password+", "+player.rank+")");
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
+    }
+
+    public boolean updatePlayerRank(Connection connection, Player player){
+        try{
+            Statement statement = connection.createStatement();
+            statement.execute("UPDATE SYSTEM.BJ_USERS SET RANKING = '"+player.rank+"' where LOGIN = '"+player.login+"'");
+            //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (7, "+player.login+", "+player.password+", "+player.rank+")");
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
+    }
+
+    public boolean insertSession(Session session){
+        try{
+            Statement statement = connection.createStatement();
+            //statement.execute("INSERT INTO SYSTEM.BJ_SESSIONS VALUES (1, '"+session.getId()+"', '"+session.isOpen()+"', SYSDATE)");
+            String sessionName = session.getId();
+            Character sessionOpen;
+            if (session.isOpen()){
+                sessionOpen = 'O';
+            } else sessionOpen = 'C';
+            statement.execute("INSERT INTO SYSTEM.BJ_SESSIONS VALUES (1, '"+sessionName+"', '"+sessionOpen+"', SYSDATE)");
+            //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (7, "+player.login+", "+player.password+", "+player.rank+")");
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return  true;
+    }
+
+
+
+
+
+
+
+    public void checkRegister(Session session, String name) {
+
+        boolean checker = true;
+        for (Player player: players) {
+            if (player.login.equals(name)) checker = false;
+        }
+        if (checker == true) {
+            Player newPlayer = new Player(name);
+            players.add(newPlayer);
+            activePlayers.add(new ActivePlayer(session,name));
+            JsonObject mess = createMessage("correctName", name, "xxx");
+
+            insertPlayer(connection,newPlayer);
+
+            sendToSession(session,mess);
+        }
+        else {
+            JsonObject mess = createMessage("wrongName", name, "xxx");
+            sendToSession(session,mess);
+        }
+    }
+
     public void checkPasswordReg(String name, String instruction) {
 
         for (Player player : players) {
-            if (player.login.equals(name)) player.password = instruction;
+            if (player.login.equals(name)) {
+                player.password = instruction;
+                updatePlayerPass(connection, player);
+            }
         }
     }
 
@@ -232,8 +337,14 @@ public class DeviceSessionHandler {
             JsonObject mess2 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result2+" vs. "+thisTable.result1);
             sendToSession(thisTable.session2,mess2);
             for (Player player : players) {
-                if (player.login.equals(thisTable.name1)) player.rank = player.rank + 1;
-                else if (player.login.equals(thisTable.name2)) player.rank = player.rank - 1;
+                if (player.login.equals(thisTable.name1)) {
+                    player.rank = player.rank + 1;
+                    updatePlayerRank(connection,player);
+                }
+                else if (player.login.equals(thisTable.name2)) {
+                    player.rank = player.rank - 1;
+                    updatePlayerRank(connection,player);
+                }
             }
         } else if (result == 2) {
             JsonObject mess3 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result1+" vs. "+thisTable.result2);
@@ -241,8 +352,14 @@ public class DeviceSessionHandler {
             JsonObject mess4 = createMessage("gameResult", "xxx", "You WIN!!! "+thisTable.result2+" vs. "+thisTable.result1);
             sendToSession(thisTable.session2,mess4);
             for (Player player : players) {
-                if (player.login.equals(thisTable.name1)) player.rank = player.rank - 1;
-                else if (player.login.equals(thisTable.name2)) player.rank = player.rank + 1;
+                if (player.login.equals(thisTable.name1)) {
+                    player.rank = player.rank - 1;
+                    updatePlayerRank(connection,player);
+                }
+                else if (player.login.equals(thisTable.name2)) {
+                    player.rank = player.rank + 1;
+                    updatePlayerRank(connection,player);
+                }
             }
         }
     }
