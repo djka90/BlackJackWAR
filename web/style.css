@@ -1,94 +1,268 @@
-
-* {
-    box-sizing: border-box;
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Century Gothic;
 }
 
-h1 {
-    text-align: center;
-    text-transform: uppercase;
-    color: black;
-    letter-spacing: 32px;
-    font-family: arial;
-    font-size: 16px;
+header{
+    background-image:linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3)), url(back.jpeg);
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
 }
 
-h2 {
-    text-align: center;
-    text-transform: uppercase;
-    color: black;
-    letter-spacing: 16px;
-    font-family: arial;
-    font-size: 24px;
+ul{
+    margin-top: 25px;
+    float: right;
+    list-style-type: none;
 }
 
-p {
-    text-align: left;
-    color: black;
-    letter-spacing: 2px;
-    font-family: arial;
-    font-size: 12px;
+ul li{
+    display: inline-block;
 }
 
-div {
-    text-align: left;
-    color: black;
-    letter-spacing: 2px;
-    font-family: arial;
-    font-size: 12px;
+button{
+    text-decoration: none;
+    color: #fff;
+    background-color: transparent;
+    padding: 5px 20px;
+    border: 1.5px solid transparent;
+    transition: 0.6s ease;
+    cursor: pointer;
+    outline: none;
 }
 
-/* Create three equal columns that floats next to each other */
-.column1 {
+a{
+    text-decoration: none;
+    color: #fff;
+    background-color: transparent;
+}
+
+button:hover{
+    background-color: #fff;
+    color: #000;
+}
+
+.active button{
+    background-color: #fff;
+    color: #000;
+}
+
+.logo img{
     float: left;
+    width: 150px;
+    height: auto;
+}
+
+.logo #typeWhat{
+    margin-top: 15px;
+    float: left;
+    height: auto;
+    text-decoration: none;
+    text-align: center;
+    color: #fff;
+    background-color: transparent;
+    padding: 5px;
+    margin-left: 100px;
+}
+
+.main{
+    margin-right: 100px;
+}
+
+.title{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+.title h1{
+    color: #fff;
+    font-size: 70px;
+    width: 540px;
+    height: auto;
+    text-decoration: none;
+    text-align: center;
+    background-color: transparent;
+}
+
+.buttons{
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+.buttons button{
+    font-size: 20px;
+    border: 1px solid #fff;
+    padding: 10px 30px;
+}
+
+.buttons input{
+    width: 300px;
+    padding: 10px 30px;
+    font-size: 20px;
+    border: 1px solid #fff;
+    border-radius: 5px;
+    outline: none;
+}
+
+.logo #cursor{
+    margin-top: 15px;
+    float: left;
+    height: auto;
+    text-decoration: none;
+    text-align: center;
+    color: #fff;
+    background-color: transparent;
+}
+
+.blinking-cursor {
+    font-weight: 100;
+    font-size: 25px;
+    color: white;
+    -webkit-animation: 1s blink step-end infinite;
+    -moz-animation: 1s blink step-end infinite;
+    -ms-animation: 1s blink step-end infinite;
+    -o-animation: 1s blink step-end infinite;
+    animation: 1s blink step-end infinite;
+}
+
+@keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: white;
+    }
+}
+
+@-moz-keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: white;
+    }
+}
+
+@-webkit-keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: white;
+    }
+}
+
+@-ms-keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: white;
+    }
+}
+
+@-o-keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: white;
+    }
+}
+
+
+
+.ranking{
+    position: absolute;
+    top: 40%;
+    left: 3%;
+    font-size: 12px;
+    overflow:auto;
+    width:300px;
+    height:300px;
+    color: white;
+}
+
+#rankingTable {
+    border-collapse: collapse;
     width: 100%;
-    padding: 30px;
-    height: 360px; /* Should be removed. Only for demonstration */
 }
 
-/* Create two equal columns that floats next to each other */
-.column2 {
-    float: left;
-    width: 50%;
-    padding: 30px;
-    height: 360px; /* Should be removed. Only for demonstration */
+#rankingTable td, #rankingTable th {
+    padding: 8px;
 }
 
-/* Create three equal columns that floats next to each other */
-.column3 {
-    float: left;
-    width: 33.33%;
-    padding: 30px;
-    height: 360px; /* Should be removed. Only for demonstration */
-}
+/*#rankingTable tr:nth-child(even){background-color: white}*/
 
-/* Create 13 equal columns that floats next to each other */
-.column13 {
-    float: left;
-    width: 7.69%;
-    padding: 10px;
-    height: 90px; /* Should be removed. Only for demonstration */
-}
+#rankingTable tr:hover {background-color: white; color: black;}
 
-/* Create 26 equal columns that floats next to each other */
-.column26 {
-    float: left;
-    width: 3.84%;
-    padding: 1px;
-    height: 60px; /* Should be removed. Only for demonstration */
-}
-
-/* Clear floats after the columns */
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
+#rankingTable th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: white;
+    color: black;
 }
 
 
 
+.chat{
+    position: absolute;
+    top: 40%;
+    right: 3%;
+    font-size: 12px;
+    overflow:auto;
+    width:300px;
+    height:300px;
+    color: white;
+}
 
+#chatTable {
+    border-collapse: collapse;
+    width: 100%;
+}
 
+#chatTable td, #chatTable th {
+    padding: 8px;
+}
 
+/*#rankingTable tr:nth-child(even){background-color: white}*/
 
+#chatTable tr:hover {background-color: white; color: black;}
 
+#chatTable th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: white;
+    color: black;
+}
+
+.chatButtons{
+    position: absolute;
+    top: 85%;
+    right: 3%;
+    font-size: 12px;
+    overflow:auto;
+    width:300px;
+    color: white;
+}
+
+.chatButtons button{
+    font-size: 12px;
+}
+
+.chatButtons input{
+    width: 180px;
+    padding: 5px 15px;
+    font-size: 12px;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    outline: none;
+}
 
