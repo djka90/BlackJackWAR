@@ -181,7 +181,7 @@ button:hover{
     position: absolute;
     top: 40%;
     left: 3%;
-    font-size: 12px;
+    font-size: 15px;
     overflow:auto;
     width:300px;
     height:300px;
@@ -215,7 +215,7 @@ button:hover{
     position: absolute;
     top: 40%;
     right: 3%;
-    font-size: 12px;
+    font-size: 15px;
     overflow:auto;
     width:300px;
     height:300px;
@@ -247,22 +247,38 @@ button:hover{
     position: absolute;
     top: 85%;
     right: 3%;
-    font-size: 12px;
+    font-size: 15px;
     overflow:auto;
     width:300px;
     color: white;
 }
 
 .chatButtons button{
-    font-size: 12px;
+    font-size: 15px;
 }
 
 .chatButtons input{
     width: 180px;
     padding: 5px 15px;
-    font-size: 12px;
+    font-size: 15px;
     border: 1px solid #fff;
     border-radius: 3px;
     outline: none;
+}
+
+
+
+.cards{
+    position: absolute;
+    top: 75%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+.cards img{
+    padding: 5px;
+    height: 180px;
+    width: 120px;
+    display: inline-block;
 }
 

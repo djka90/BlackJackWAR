@@ -94,7 +94,8 @@ public class DeviceSessionHandler {
         try{
             Statement statement = connection.createStatement();
 
-            String query = "SELECT * FROM SYSTEM.BJ_USERS";
+            String query = "SELECT * FROM SYSTEM.BJ_USERS ORDER BY SYSTEM.BJ_USERS.RANKING DESC";
+            //String query = "SELECT * FROM SYSTEM.BJ_USERS";
             ResultSet resultSet = statement.executeQuery(query);
 
             while (resultSet.next()){
@@ -108,7 +109,29 @@ public class DeviceSessionHandler {
             e.printStackTrace();
             return false;
         }
-        return  true;
+        return true;
+    }
+
+    public LinkedList<Player> selectPlayerGames(Connection connection, String playerName){
+        LinkedList<Player> games = new LinkedList<>();
+        try{
+            Statement statement = connection.createStatement();
+
+            String query = "SELECT * FROM SYSTEM.BJ_MY_GAMES WHERE SYSTEM.BJ_MY_GAMES.PLAYER = '"+playerName+"'";
+            //String query = "SELECT * FROM SYSTEM.BJ_USERS";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()){
+                games.add(new Player(resultSet.getString("OPONENT"),resultSet.getString("RESULT"),0));
+            }
+
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return games;
+        }
+        return games;
     }
 
     public boolean insertPlayer(Connection connection, Player player){
@@ -123,7 +146,21 @@ public class DeviceSessionHandler {
             e.printStackTrace();
             return false;
         }
-        return  true;
+        return true;
+    }
+
+    public boolean insertGame(Connection connection, String playerName, String opponentName, String gameResult){
+        try{
+            Statement statement = connection.createStatement();
+            statement.execute("INSERT INTO SYSTEM.BJ_MY_GAMES VALUES (1, '"+playerName+"', '"+opponentName+"', '"+gameResult+"')");
+            //statement.execute("INSERT INTO SYSTEM.BJ_USERS VALUES (7, "+player.login+", "+player.password+", "+player.rank+")");
+            //System.out.println("Data selected");
+        }catch(SQLException e){
+            //System.out.println("Select Error");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean updatePlayerPass(Connection connection, Player player){
@@ -202,7 +239,7 @@ public class DeviceSessionHandler {
         }
     }
 
-    public void checkPasswordReg(String name, String instruction) {
+    public void checkPasswordReg(Session session, String name, String instruction) {
 
         for (Player player : players) {
             if (player.login.equals(name)) {
@@ -210,6 +247,27 @@ public class DeviceSessionHandler {
                 updatePlayerPass(connection, player);
             }
         }
+
+        String emptyTables = "";
+        String halfTables = "";
+        for (Table table : tables) {
+            if (table.numberOfPlayers == 2);
+            else if (table.numberOfPlayers == 1) halfTables = halfTables + table.tableNumber + " ";
+            else {
+                emptyTables = emptyTables + table.tableNumber + " ";
+            }
+        }
+        if (emptyTables.equals("")) ;
+        else {
+            emptyTables = emptyTables.substring(0,emptyTables.length()-1);
+        }
+        if (halfTables.equals("")) ;
+        else {
+            halfTables = halfTables.substring(0,halfTables.length()-1);
+        }
+
+        JsonObject mess = createMessage("correctPassword", emptyTables, halfTables);
+        sendToSession(session,mess);
     }
 
     public void checkLogin(Session session, String name) {
@@ -241,7 +299,26 @@ public class DeviceSessionHandler {
             if (player.login.equals(name) && player.password.equals(instruction)) checker = true;
         }
         if (checker == true) {
-            JsonObject mess = createMessage("correctPassword2", "xxx", "xxx");
+
+            String emptyTables = "";
+            String halfTables = "";
+            for (Table table : tables) {
+                if (table.numberOfPlayers == 2);
+                else if (table.numberOfPlayers == 1) halfTables = halfTables + table.tableNumber + " ";
+                else {
+                    emptyTables = emptyTables + table.tableNumber + " ";
+                }
+            }
+            if (emptyTables.equals("")) ;
+            else {
+                emptyTables = emptyTables.substring(0,emptyTables.length()-1);
+            }
+            if (halfTables.equals("")) ;
+            else {
+                halfTables = halfTables.substring(0,halfTables.length()-1);
+            }
+
+            JsonObject mess = createMessage("correctPassword2", emptyTables, halfTables);
             sendToSession(session,mess);
         }
         else {
@@ -274,9 +351,9 @@ public class DeviceSessionHandler {
         }
     }
 
-    public void checkMessage(String name, String nameAndMessage) {
+    public void checkMessage(String name, String textOfMessage) {
 
-        JsonObject mess = createMessage("newMessage", "xxx", nameAndMessage);
+        JsonObject mess = createMessage("newMessage", name, textOfMessage);
         for (Table table : tables) {
             if (name.equals(table.name1)||name.equals(table.name2)) {
                 sendToSession(table.session1,mess);
@@ -331,11 +408,15 @@ public class DeviceSessionHandler {
             JsonObject mess = createMessage("gameResult", "xxx", "DRAW!!! "+thisTable.result1+" vs. "+thisTable.result2);
             sendToSession(thisTable.session1,mess);
             sendToSession(thisTable.session2,mess);
+            insertGame(connection,thisTable.name1,thisTable.name2,"DRAW");
+            insertGame(connection,thisTable.name2,thisTable.name1,"DRAW");
         } else if (result == 1) {
             JsonObject mess1 = createMessage("gameResult", "xxx", "You WIN!!! "+thisTable.result1+" vs. "+thisTable.result2);
             sendToSession(thisTable.session1,mess1);
-            JsonObject mess2 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result2+" vs. "+thisTable.result1);
+            insertGame(connection,thisTable.name1,thisTable.name2,"WIN");
+            JsonObject mess2 = createMessage("gameResult", "xxx", "You LOSE!!! "+thisTable.result2+" vs. "+thisTable.result1);
             sendToSession(thisTable.session2,mess2);
+            insertGame(connection,thisTable.name2,thisTable.name1,"LOSE");
             for (Player player : players) {
                 if (player.login.equals(thisTable.name1)) {
                     player.rank = player.rank + 1;
@@ -347,10 +428,12 @@ public class DeviceSessionHandler {
                 }
             }
         } else if (result == 2) {
-            JsonObject mess3 = createMessage("gameResult", "xxx", "You LOOSE!!! "+thisTable.result1+" vs. "+thisTable.result2);
+            JsonObject mess3 = createMessage("gameResult", "xxx", "You LOSE!!! "+thisTable.result1+" vs. "+thisTable.result2);
             sendToSession(thisTable.session1,mess3);
+            insertGame(connection,thisTable.name1,thisTable.name2,"LOSE");
             JsonObject mess4 = createMessage("gameResult", "xxx", "You WIN!!! "+thisTable.result2+" vs. "+thisTable.result1);
             sendToSession(thisTable.session2,mess4);
+            insertGame(connection,thisTable.name2,thisTable.name1,"WIN");
             for (Player player : players) {
                 if (player.login.equals(thisTable.name1)) {
                     player.rank = player.rank - 1;
@@ -397,6 +480,37 @@ public class DeviceSessionHandler {
         sendToSession(session,mess);
     }
 
+    public void callForNewRanking2(Session session) {
+        String []ranking = new String[3];
+        int lp = 1;
+        for (Player player: players) {
+            ranking[0] = lp+".";
+            ranking[1] = player.login;
+            ranking[2] = player.rank+"";
+            JsonObject mess = createMessageRow("newRankingRow", ranking[0], ranking[1], ranking[2]);
+            sendToSession(session,mess);
+            lp++;
+        }
+        JsonObject mess = createMessage("rankingRefreshed", "xxx", "xxx");
+        sendToSession(session,mess);
+    }
+
+    public void callForNewMyGames(Session session, String playerName) {
+        LinkedList<Player> games = selectPlayerGames(connection, playerName);
+        String []myGames = new String[3];
+        int lp = 1;
+        for (Player game: games) {
+            myGames[0] = lp+".";
+            myGames[1] = game.login;
+            myGames[2] = game.password;
+            JsonObject mess = createMessageRow("newMyGamesRow", myGames[0], myGames[1], myGames[2]);
+            sendToSession(session,mess);
+            lp++;
+        }
+        JsonObject mess = createMessage("myGamesDelivered", "xxx", "xxx");
+        sendToSession(session,mess);
+    }
+
     public void addSession(Session session) {
         sessions.add(session);
     }
@@ -406,9 +520,33 @@ public class DeviceSessionHandler {
         Table thisTable = this.findTableBySession(session);
         if (thisTable == null) ;
         else {
-            JsonObject mess = createMessage("opponentLost", "xxx", "xxx");
-            if (session.equals(thisTable.session1)) sendToSession(thisTable.session2,mess);
-            else if (session.equals(thisTable.session2)) sendToSession(thisTable.session1,mess);
+            if (thisTable.session2 == null) ;
+            else {
+
+                thisTable.numberOfPlayers = 0;
+
+                String emptyTables = "";
+                String halfTables = "";
+                for (Table table : tables) {
+                    if (table.numberOfPlayers == 2);
+                    else if (table.numberOfPlayers == 1) halfTables = halfTables + table.tableNumber + " ";
+                    else {
+                        emptyTables = emptyTables + table.tableNumber + " ";
+                    }
+                }
+                if (emptyTables.equals("")) ;
+                else {
+                    emptyTables = emptyTables.substring(0,emptyTables.length()-1);
+                }
+                if (halfTables.equals("")) ;
+                else {
+                    halfTables = halfTables.substring(0,halfTables.length()-1);
+                }
+
+                JsonObject mess = createMessage("opponentLost", emptyTables, halfTables);
+                if (session.equals(thisTable.session1)) sendToSession(thisTable.session2,mess);
+                else if (session.equals(thisTable.session2)) sendToSession(thisTable.session1,mess);
+            }
             thisTable.resetTable();
         }
     }
@@ -433,6 +571,17 @@ public class DeviceSessionHandler {
                 .add("action", action)
                 .add("name", name)
                 .add("instruction", instruction)
+                .build();
+        return addMessage;
+    }
+
+    public JsonObject createMessageRow(String action, String col1, String col2, String col3) {
+        JsonProvider provider = JsonProvider.provider();
+        JsonObject addMessage = provider.createObjectBuilder()
+                .add("action", action)
+                .add("col1", col1)
+                .add("col2", col2)
+                .add("col3", col3)
                 .build();
         return addMessage;
     }

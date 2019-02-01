@@ -62,7 +62,7 @@ public class DeviceWebSocketServer {
 
                 String name = jsonMessage.getString("name");
                 String instruction = jsonMessage.getString("instruction");
-                sessionHandler.checkPasswordReg(name, instruction);
+                sessionHandler.checkPasswordReg(session, name, instruction);
             }
 
             if ("sendName2".equals(jsonMessage.getString("action"))) {
@@ -90,8 +90,8 @@ public class DeviceWebSocketServer {
 
                 String name = jsonMessage.getString("name");
                 String instruction = jsonMessage.getString("instruction");
-                String nameAndMessage = name + ": " + instruction;
-                sessionHandler.checkMessage(name,nameAndMessage);
+                String textOfMessage = instruction;
+                sessionHandler.checkMessage(name,textOfMessage);
             }
 
             if ("addCard".equals(jsonMessage.getString("action"))) {
@@ -115,9 +115,22 @@ public class DeviceWebSocketServer {
             if ("refreshRanking".equals(jsonMessage.getString("action"))) {
 
                 String name = jsonMessage.getString("name");
-                sessionHandler.callForNewRanking(session);
+                sessionHandler.callForNewRanking2(session);
+            }
+
+            if ("myGamesPlease".equals(jsonMessage.getString("action"))) {
+
+                String name = jsonMessage.getString("name");
+                sessionHandler.callForNewMyGames(session, name);
+            }
+
+            if ("logOut".equals(jsonMessage.getString("action"))) {
+
+                String name = jsonMessage.getString("name");
+                sessionHandler.checkClosedPlayerTable(session);
+                sessionHandler.removeActivePlayer(session);
             }
 
         }
     }
-}    
+}
